@@ -364,6 +364,8 @@
         return 0;
       };
 
+      const isOperatorChar = (ch) => "+-*/".includes(ch);
+
       const applyOp = (op, b, a) => {
         switch (op) {
           case "+": return a + b;
@@ -385,8 +387,17 @@
           continue;
         }
 
-        if ((ch >= "0" && ch <= "9") || ch === ".") {
+        // handle numbers (including unary minus, e.g. -5 or (-3))
+        if ((ch >= "0" && ch <= "9") || ch === "." ||
+            (ch === "-" && (i === 0 || expr[i - 1] === "(" || isOperatorChar(expr[i - 1])))) {
           let numStr = "";
+
+          // unary minus
+          if (ch === "-") {
+            numStr += "-";
+            i++;
+          }
+
           while (
             i < expr.length &&
             ((expr[i] >= "0" && expr[i] <= "9") || expr[i] === ".")
@@ -394,6 +405,11 @@
             numStr += expr[i];
             i++;
           }
+
+          if (numStr === "-" || numStr === "" || numStr === ".") {
+            throw new Error("Invalid number");
+          }
+
           values.push(parseFloat(numStr));
           continue;
         }
@@ -409,7 +425,7 @@
           }
           if (!ops.length) throw new Error("Mismatched parentheses");
           ops.pop(); // remove "("
-        } else if ("+-*/".includes(ch)) {
+        } else if (isOperatorChar(ch)) {
           while (ops.length && precedence(ops[ops.length - 1]) >= precedence(ch)) {
             const op = ops.pop();
             const val2 = values.pop();
@@ -439,4 +455,3 @@
   </script>
 </body>
 </html>
-
